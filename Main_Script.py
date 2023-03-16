@@ -40,7 +40,7 @@ if dataset_type == "full":
     #test fastq-dump for how many reads to take
     #or cut however many lines (multiple of 4 left)
 elif dataset_type == "test":
-    filenames = ['SRR5660030','SRR5660033','SRR5660044','SRR5660045']
+    filenames = ['SRR5660030_test','SRR5660033_test','SRR5660044_test','SRR5660045_test']
     dataset_path = '../test_data/'
 #STEP 2#############################################################################################################################################################
 
@@ -96,8 +96,10 @@ logging.info("Donor 3 (6dpi) had " + reads_before[4] + " read pairs before Bowti
 #spades to assemble all 4 transcriptomes together
 
 #os.system(SPAdes_assembly_script.py)
+spades_command = 'spades.py -k 77,99,127 -t 2 --only-assembler --pe-1 1 ' + filenames[1] + '_mapped_1.fq.gz --pe-2 1 ' + filenames[1] + '_mapped_2.fq.gz --pe-1 2 ' + filenames[2] + '_mapped_1.fq.gz --pe-2 2 ' + filenames[2] + '_mapped_2.fq.gz --pe-1 3 ' + filenames[3] + '_mapped_1.fq.gz --pe-2 3 ' + filenames[3] + '_mapped_2.fq.gz --pe-1 4 ' + filenames[4] + '_mapped_1.fq.gz --pe-2 4 ' + filenames[4] + '_mapped_2.fq.gz -o SPAdes_assembly/'
+os.system(spades_command)
 
-
+logging.info('spades.py -k 77,99,127 -t 2 --only-assembler --pe-1 1 ' + filenames[1] + '_mapped_1.fq.gz --pe-2 1 ' + filenames[1] + '_mapped_2.fq.gz --pe-1 2 ' + filenames[2] + '_mapped_1.fq.gz  --pe-2 2 ' + filenames[2] + '_mapped_2.fq.gz --pe-1 3 ' + filenames[3] + '_mapped_1.fq.gz --pe-2 3 ' + filenames[3] + '_mapped_2.fq.gz --pe-1 4 ' + filenames[4] + '_mapped_1.fq.gz --pe-2 4 ' + filenames[4] + '_mapped_2.fq.gz -o SPAdes_assembly/'
 
 #STEP 4#############################################################################################################################################################
 
