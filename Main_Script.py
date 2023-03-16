@@ -1,5 +1,4 @@
 import os
-import sys
 #create a directory for all files to be added to
 directory = "PipelineProject_Alec_Loftus"
 parent_dir = os.path.abspath(os.getcwd())
@@ -7,16 +6,10 @@ parent_dir = os.path.abspath(os.getcwd())
 path = parent_dir + "/" + directory
 os.mkdir(path)
 print("Directory '%s' created" % directory)
-path = parent_dir + "/" + directory
-os.mkdir(path)
-print("Directory '%s' created" % directory)
-
 os.chdir(directory)
 print('All outfiles will be written within the path ' + os.path.abspath(os.getcwd()))
 
-dataset_type = ""
-while dataset_type != "full" or dataset_type != "test":
-    dataset_type = input("Which dataset are you running?(full/test): ")
+dataset_type = input("Which dataset are you running?(full/test): ")
 
 if dataset_type == "full":
     #all of the SRA files to be used
@@ -42,6 +35,8 @@ if dataset_type == "full":
 elif dataset_type == "test":
     filenames = ['SRR5660030_test','SRR5660033_test','SRR5660044_test','SRR5660045_test']
     dataset_path = '../test_data/'
+
+print(dataset_path)
 #STEP 2#############################################################################################################################################################
 
 import logging
@@ -55,39 +50,33 @@ logging.basicConfig(
 
 reads_before = []
 for file in filenames:
-    file_length_command = 'wc -l ' + directory_path + file + '_1.fastq'
-    read_length = os.system(file_length_command)
-    reads_before.append(int(read_length)/4)
+    file_length_command = 'wc -l < ' + dataset_path + file + '_1.fastq'
+    reads_before.append(int(os.system(file_length_command)/4))
+print(reads_before)
 
 
-
-
-
-#pull reference genome from repository file
-HCMV_genome = "HCMV_reference_genome.fasta"
-#create HCMV index using bowtie2-build command
-bowtie2_build_command = 'bowtie2-build ' + HCMV_genome + ' HCMV_index'
+#pull reference genome from repository file and create HCMV index using bowtie2-build command
+bowtie2_build_command = 'bowtie2-build ../HCMV_reference_genome.fasta HCMV'
 os.system(bowtie2_build_command)
 
 for file in filenames:
-    bowtie2_command = 'bowtie2 --quiet -x HCMV_index -1 ' + dataset_path + file + '_1.fastq -2 ' + dataset_path + file + '_2.fastq -s ' + file + 'map.sam --al-conc-gz ' + file + '_mapped_%.fq.gz'
+    bowtie2_command = 'bowtie2 --quiet -x HCMV -1 ' + dataset_path + file + '_1.fastq -2 ' + dataset_path + file + '_2.fastq -s ' + file + 'map.sam --al-conc-gz ' + file + '_mapped_%.fq.gz'
     os.system(bowtie2_command)
 
 
 reads_after = []
 for file in filenames:
-    file_length_command = 'wc -l ' + file +  '_mapped_1.fq.gz'
-    read_length = os.system(file_length_command)
-    reads_after.append(int(read_length)/4)
+    file_length_command = 'wc -l < ' + file +  '_mapped_1.fq.gz'
+    reads_after.append(int(os.system(file_length_command)/4))
 
 
-logging.info("Donor 1 (2dpi) had " + reads_before[1] + " read pairs before Bowtie2 filtering and " + reads_after[1] + " read pairs after.\n")
+logging.info("Donor 1 (2dpi) had " + str(reads_before[0]) + " read pairs before Bowtie2 filtering and " + str(reads_after[0]) + " read pairs after.\n")
 
-logging.info("Donor 1 (6dpi) had " + reads_before[2] + " read pairs before Bowtie2 filtering and " + reads_after[2] + " read pairs after.\n")
+logging.info("Donor 1 (6dpi) had " + str(reads_before[1]) + " read pairs before Bowtie2 filtering and " + str(reads_after[1]) + " read pairs after.\n")
 
-logging.info("Donor 3 (2dpi) had " + reads_before[3] + " read pairs before Bowtie2 filtering and " + reads_after[3] + " read pairs after.\n")
+logging.info("Donor 3 (2dpi) had " + str(reads_before[2]) + " read pairs before Bowtie2 filtering and " + str(reads_after[2]) + " read pairs after.\n")
 
-logging.info("Donor 3 (6dpi) had " + reads_before[4] + " read pairs before Bowtie2 filtering and " + reads_after[4] + " read pairs after.\n")
+logging.info("Donor 3 (6dpi) had " + str(reads_before[3]) + " read pairs before Bowtie2 filtering and " + str(reads_after[3]) + " read pairs after.\n")
 
 
 
@@ -96,10 +85,10 @@ logging.info("Donor 3 (6dpi) had " + reads_before[4] + " read pairs before Bowti
 #spades to assemble all 4 transcriptomes together
 
 #os.system(SPAdes_assembly_script.py)
-spades_command = 'spades.py -k 77,99,127 -t 2 --only-assembler --pe-1 1 ' + filenames[1] + '_mapped_1.fq.gz --pe-2 1 ' + filenames[1] + '_mapped_2.fq.gz --pe-1 2 ' + filenames[2] + '_mapped_1.fq.gz --pe-2 2 ' + filenames[2] + '_mapped_2.fq.gz --pe-1 3 ' + filenames[3] + '_mapped_1.fq.gz --pe-2 3 ' + filenames[3] + '_mapped_2.fq.gz --pe-1 4 ' + filenames[4] + '_mapped_1.fq.gz --pe-2 4 ' + filenames[4] + '_mapped_2.fq.gz -o SPAdes_assembly/'
+spades_command = 'spades.py -k 77,99,127 -t 2 --only-assembler --pe-1 1 ' + filenames[0] + '_mapped_1.fq.gz --pe-2 1 ' + filenames[0] + '_mapped_2.fq.gz --pe-1 2 ' + filenames[1] + '_mapped_1.fq.gz --pe-2 2 ' + filenames[1] + '_mapped_2.fq.gz --pe-1 3 ' + filenames[2] + '_mapped_1.fq.gz --pe-2 3 ' + filenames[2] + '_mapped_2.fq.gz --pe-1 4 ' + filenames[3] + '_mapped_1.fq.gz --pe-2 4 ' + filenames[3] + '_mapped_2.fq.gz -o SPAdes_assembly/'
 os.system(spades_command)
 
-logging.info('spades.py -k 77,99,127 -t 2 --only-assembler --pe-1 1 ' + filenames[1] + '_mapped_1.fq.gz --pe-2 1 ' + filenames[1] + '_mapped_2.fq.gz --pe-1 2 ' + filenames[2] + '_mapped_1.fq.gz  --pe-2 2 ' + filenames[2] + '_mapped_2.fq.gz --pe-1 3 ' + filenames[3] + '_mapped_1.fq.gz --pe-2 3 ' + filenames[3] + '_mapped_2.fq.gz --pe-1 4 ' + filenames[4] + '_mapped_1.fq.gz --pe-2 4 ' + filenames[4] + '_mapped_2.fq.gz -o SPAdes_assembly/'
+logging.info('spades.py -k 77,99,127 -t 2 --only-assembler --pe-1 1 ' + filenames[0] + '_mapped_1.fq.gz --pe-2 1 ' + filenames[0] + '_mapped_2.fq.gz --pe-1 2 ' + filenames[1] + '_mapped_1.fq.gz  --pe-2 2 ' + filenames[1] + '_mapped_2.fq.gz --pe-1 3 ' + filenames[2] + '_mapped_1.fq.gz --pe-2 3 ' + filenames[2] + '_mapped_2.fq.gz --pe-1 4 ' + filenames[3] + '_mapped_1.fq.gz --pe-2 4 ' + filenames[3] + '_mapped_2.fq.gz -o SPAdes_assembly/')
 
 #STEP 4#############################################################################################################################################################
 
