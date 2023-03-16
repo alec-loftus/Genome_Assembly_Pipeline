@@ -143,7 +143,7 @@ logging.info("There are %s bp in the assembly." %bps_in_assembly)
 
 #take the longest contig we found earlier and write it to a fasta file that can be used by the blast command as the query
 outfile = open("longest_contig.fasta","w")
-outfile.write(largest_contig_id + "\n" + largest_contig_sequence)
+outfile.write(">" + largest_contig_id + "\n" + largest_contig_sequence)
 outfile.close()
 
 #Entrez from Biopython allows accessing NCBI accession numbers and 
@@ -181,8 +181,8 @@ os.system(blast_command)
 logging.info('sacc\tpident\tlength\tqstart\tqend\tsstart\tsend\tbitscore\tevalue\tstitle\t')
 blast_results = 'head -n 10 ' + output_file
 def blast_results(output_file):
-    return check_output('head',output_file)
+    return check_output(['head',output_file])
 blast_output = blast_results(output_file)
 
-logging.info(blast_output)
+logging.info(blast_results(output_file))
 
