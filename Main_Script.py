@@ -47,11 +47,18 @@ logging.basicConfig(
     filename = 'PipelineProject.log',
     filemode = 'w')
 
+def wc(filename):
+    return int(check_output(['wc','-l', filename]).split()[0])
+
+import subprocess
+from subprocess import check_output
 
 reads_before = []
 for file in filenames:
-    file_length_command = 'wc -l < ' + dataset_path + file + '_1.fastq'
-    reads_before.append(int(os.system(file_length_command)/4))
+    file_command = dataset_path + file + '_1.fastq'
+    read_length = wc(file_command)
+    before_length = int(read_length)
+    reads_before.append(int(before_length/4))
 print(reads_before)
 
 
@@ -66,8 +73,10 @@ for file in filenames:
 
 reads_after = []
 for file in filenames:
-    file_length_command = 'wc -l < ' + file +  '_mapped_1.fq.gz'
-    reads_after.append(int(os.system(file_length_command)/4))
+    file_command = file +  '_mapped_1.fq.gz'
+    read_length = wc(file_command)
+    after_length = int(read_length)
+    reads_after.append(int(after_length/4))
 
 
 logging.info("Donor 1 (2dpi) had " + str(reads_before[0]) + " read pairs before Bowtie2 filtering and " + str(reads_after[0]) + " read pairs after.\n")
