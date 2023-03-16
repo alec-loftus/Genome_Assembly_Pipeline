@@ -102,7 +102,62 @@ logging.info('spades.py -k 77,99,127 -t 2 --only-assembler --pe-1 1 ' + filename
 #STEP 4#############################################################################################################################################################
 
 #os.system(total_number_of_contigs.py)
+contigs_file = 'SPAdes_assembly/contigs.fasta'
+import Bio
+from Bio import SeqIO
+large_contigs = []
 
+#record the largest contig id for use in Blast+ later
+largest_contig_id = ""
+#record the largest contig for use in Blast+ later
+largest_contig_sequence = ""
+#counter variable will count each contig >1000bp in length
+counter = 0
+#the total number of base pairs in all contigs >1000bp will be added to this variable
+bps_in_assembly = 0
+
+#SeqIO as part of the Bio package in Biopython enables parsing of fasta files to grab each record in the file
+for seq_record in SeqIO.parse("SPAdes_assembly/contigs.fasta", "fasta"):
+    #only consider sequences (.seq) that are larger than 1000bp
+    if len(seq_record.seq) > 1000:
+        #counter moves up for each record this conditional is true for
+        counter+=1
+        #total bps adds the length of each sequence (the number of bases) for each record
+        bps_in_assembly+= len(seq_record.seq)
+        #of the records >1000bp, make note of the size of the current largest record and replace it if any subsequent sequence is longer
+        if len(seq_record.seq) > len(largest_contig_sequence):
+            largest_contig_sequence = seq_record.seq
+            largest_contig_id = seq_record.id
+
+#turn integer of number of large contigs into a string for writing to the log file
+counter = str(counter)
+logging.info("There are %s contigs > 1000 bp in the assembly." %counter)
+
+#turn integer of base pairs in contigs >1000bp into string for the log file
+bps_in_assembly = str(bps_in_assembly)
+logging.info("There are %s bp in the assembly." %bps_in_assembly)
 
 #STEP 5#############################################################################################################################################################
+
+#largest contig is used in Blast+ against the reference sequences in the repository
+
+makeblast_command = 'makeblastdb -in ' + refseq_file + ' -out Betaherpesvirinae -title Betaherpesvirinae -dbtype nucl'
+os.system(makeblast_command)
+
+#take the longest contig we found earlier and write it to a fasta file that can be used by the blast command as the query
+outfile.open("longest_contig.fasta","w")
+outfile.write(largest_contig_id,"\n",largest_contig_sequence)
+outfile.close()
+
+#Entrez from Biopython allows accessing NCBI accession numbers and 
+from Bio import Entrez
+Entrez.email = "aloftus1@luc.edu"
+handle = Entrez.efetch(db='nucleotide',id='',rettype='fasta',
+#assemble the blast command to take the longest contig as the query file
+input_file = 'longest_contig.fasta'
+#name the output file whatever you want in .csv format
+output_file = 'HCMV_longest_contig_blast.csv'
+
+blast_command = 'blastn -query ' + input_file + ' -db Betaherpesvirinae -out ' + output_file + ' -outfmt "6 sacc pident length qstart qend sstart send bitscore evalue stitle"'
+os.system(blast_command)
 
