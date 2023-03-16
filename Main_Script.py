@@ -126,8 +126,8 @@ for seq_record in SeqIO.parse("SPAdes_assembly/contigs.fasta", "fasta"):
         bps_in_assembly+= len(seq_record.seq)
         #of the records >1000bp, make note of the size of the current largest record and replace it if any subsequent sequence is longer
         if len(seq_record.seq) > len(largest_contig_sequence):
-            largest_contig_sequence = seq_record.seq
-            largest_contig_id = seq_record.id
+            largest_contig_sequence = str(seq_record.seq)
+            largest_contig_id = str(seq_record.id)
 
 #turn integer of number of large contigs into a string for writing to the log file
 counter = str(counter)
@@ -141,23 +141,48 @@ logging.info("There are %s bp in the assembly." %bps_in_assembly)
 
 #largest contig is used in Blast+ against the reference sequences in the repository
 
-makeblast_command = 'makeblastdb -in ' + refseq_file + ' -out Betaherpesvirinae -title Betaherpesvirinae -dbtype nucl'
-os.system(makeblast_command)
-
 #take the longest contig we found earlier and write it to a fasta file that can be used by the blast command as the query
-outfile.open("longest_contig.fasta","w")
-outfile.write(largest_contig_id,"\n",largest_contig_sequence)
+outfile = open("longest_contig.fasta","w")
+outfile.write(largest_contig_id + "\n" + largest_contig_sequence)
 outfile.close()
 
 #Entrez from Biopython allows accessing NCBI accession numbers and 
 from Bio import Entrez
 Entrez.email = "aloftus1@luc.edu"
-handle = Entrez.efetch(db='nucleotide',id='',rettype='fasta',
+handle = Entrez.esearch(db='nucleotide',term='betaherpesvirinae[organism]', retmax ='20000')
+record = Entrez.read(handle)
+string_of_ids = ""
+id_list = record["IdList"]
+
+for item in id_list:
+    string_of_ids+= item + ','
+
+string_of_ids = string_of_ids[:-1]
+print('Now fetching reference sequences for Betaherpesvirinae.')
+
+handle = Entrez.efetch(db='nucleotide',id=string_of_ids,rettype='fasta', retmode='text')
+
+outfile = open("Betaherpesvirinae_refseqs.fasta","w")
+outfile.write(handle.read())
+outfile.close()
+
+refseq_file = "Betaherpesvirinae_refseqs.fasta"
+makeblast_command = 'makeblastdb -in ' + refseq_file + ' -out Betaherpesvirinae -title Betaherpesvirinae -dbtype nucl'
+os.system(makeblast_command)
+
 #assemble the blast command to take the longest contig as the query file
 input_file = 'longest_contig.fasta'
 #name the output file whatever you want in .csv format
 output_file = 'HCMV_longest_contig_blast.csv'
 
-blast_command = 'blastn -query ' + input_file + ' -db Betaherpesvirinae -out ' + output_file + ' -outfmt "6 sacc pident length qstart qend sstart send bitscore evalue stitle"'
+blast_command = 'blastn -query ' + input_file + ' -db Betaherpesvirinae -max_hsps 1 -out ' + output_file + ' -outfmt "6 sacc pident length qstart qend sstart send bitscore evalue stitle"'
 os.system(blast_command)
+
+logging.info('sacc\tpident\tlength\tqstart\tqend\tsstart\tsend\tbitscore\tevalue\tstitle\t')
+blast_results = 'head -n 10 ' + output_file
+def blast_results(output_file):
+    return check_output('head',output_file)
+blast_output = blast_results(output_file)
+
+logging.info(blast_output)
 
