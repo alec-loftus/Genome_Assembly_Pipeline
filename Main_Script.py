@@ -4,6 +4,7 @@ directory = "PipelineProject_Alec_Loftus"
 parent_dir = os.path.abspath(os.getcwd())
 
 path = parent_dir + "/" + directory
+
 os.mkdir(path)
 print("Directory '%s' created" % directory)
 os.chdir(directory)
@@ -29,7 +30,7 @@ if dataset_type == "full":
         print('Now fastq dumping file ' + file)
         paired_command = "fastq-dump -I --split-files " + file
         os.system(paired_command)
-    dataset_path = os.path.abspath(os.getcwd())
+    dataset_path = os.path.abspath(os.getcwd()) + "/"
     #test fastq-dump for how many reads to take
     #or cut however many lines (multiple of 4 left)
 elif dataset_type == "test":
@@ -146,7 +147,13 @@ outfile = open("longest_contig.fasta","w")
 outfile.write(">" + largest_contig_id + "\n" + largest_contig_sequence)
 outfile.close()
 
-#Entrez from Biopython allows accessing NCBI accession numbers and 
+
+'''
+The Betaherpesvirinae reference sequences and subsequent database were created in advance using the code in this block text
+At the time of gathering, there were 15065 sequences in the Betaherpesvirinae subfamily
+For exact replication, use this number of sequences. To produce more accurate results with the most updated subfamily, inclusive of new sequences added, use all NCBI ids
+
+#Entrez from Biopython allows access to the ID numbers to fetch their fasta sequences from NCBI
 from Bio import Entrez
 Entrez.email = "aloftus1@luc.edu"
 handle = Entrez.esearch(db='nucleotide',term='betaherpesvirinae[organism]', retmax ='20000')
@@ -166,23 +173,24 @@ outfile = open("Betaherpesvirinae_refseqs.fasta","w")
 outfile.write(handle.read())
 outfile.close()
 
-refseq_file = "Betaherpesvirinae_refseqs.fasta"
-makeblast_command = 'makeblastdb -in ' + refseq_file + ' -out Betaherpesvirinae -title Betaherpesvirinae -dbtype nucl'
-os.system(makeblast_command)
 
+refseq_file = "Betaherpesvirinae_refseqs.fasta"
+makeblast_command = 'makeblastdb -in ' + refseq_file + ' -out ../Betaherpesvirinae/Betaherpesvirinae -title Betaherpesvirinae -dbtype nucl'
+os.system(makeblast_command)
+'''
 #assemble the blast command to take the longest contig as the query file
 input_file = 'longest_contig.fasta'
 #name the output file whatever you want in .csv format
 output_file = 'HCMV_longest_contig_blast.csv'
 
-blast_command = 'blastn -query ' + input_file + ' -db Betaherpesvirinae -max_hsps 1 -out ' + output_file + ' -outfmt "6 sacc pident length qstart qend sstart send bitscore evalue stitle"'
+blast_command = 'blastn -query ' + input_file + ' -db ../Betaherpesvirinae/Betaherpesvirinae -max_hsps 1 -out ' + output_file + ' -outfmt "6 sacc pident length qstart qend sstart send bitscore evalue stitle"'
 os.system(blast_command)
 
-logging.info('sacc\tpident\tlength\tqstart\tqend\tsstart\tsend\tbitscore\tevalue\tstitle\t')
 blast_results = 'head -n 10 ' + output_file
 def blast_results(output_file):
     return check_output(['head',output_file])
 blast_output = blast_results(output_file)
+blast_output = blast_output.decode('utf-8')
+logging.info('\nsacc\t\tpident\tlength\tqstart\tqend\tsstart\tsend\tbitscore evalue\tstitle\t\n'+blast_output)
 
-logging.info(blast_results(output_file))
-
+print('Blast+ has been completed, thank you for running the pipeline!')
