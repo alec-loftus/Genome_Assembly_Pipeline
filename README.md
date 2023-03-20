@@ -1,5 +1,5 @@
 # Genome_Assembly_Pipeline
-Python wrapper automating the execution of genome assembly for HCMV transcriptomes from two donors 2 days and 6 days post infection (dpi).
+Python script automating the execution of genome assembly for HCMV transcriptomes from two donors 2 days and 6 days post infection (dpi).
 
 Tools included in this pipeline are:
 
